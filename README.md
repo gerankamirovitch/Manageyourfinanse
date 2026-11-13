@@ -64,6 +64,6 @@ Reviewed against OWASP Top 10 (2025) on 2026-11-13.
 
 Licensed under the [Apache License 2.0](LICENSE). Chart.js in `static/vendor/` is MIT-licensed (see `static/vendor/chart.js-LICENSE.md`).
 
-## Кратко на русском
+## На русском
 
 Учёт личных финансов на Flask и SQLite. Запуск: `pip install -r requirements.txt`, затем `python app.py`, адрес http://127.0.0.1:5000. Данные хранятся на сервере в `database.db`. Вход и регистрация защищены капчей-картинкой. На сайте есть политика конфиденциальности и условия использования; перед публикацией укажите `LEGAL_OWNER` и `LEGAL_EMAIL` и покажите тексты юристу. В настройках можно скачать копию данных и удалить аккаунт. Лицензия: Apache-2.0.
