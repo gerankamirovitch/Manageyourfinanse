@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Akysaya — учёт доходов и расходов, финансовые цели, графики трат и подсказки по бюджету.">
+    <meta name="theme-color" content="#000000">
+    <title>Akysaya — Умное управление финансами</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%239281f7'/%3E%3Ctext x='12' y='17' font-size='13' font-family='Arial' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script src="{{ url_for('static', filename='vendor/chart.umd-4.4.1.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <!-- Тема применяется до первой отрисовки, чтобы фон не «мигал» стандартным -->
+    <script src="{{ url_for('static', filename='js/theme-boot.js') }}"></script>
+    <div id="app">
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Confetti Canvas -->
+        <canvas id="confetti-canvas"></canvas>
+
+        <!-- ===== NAVBAR ===== -->
+        <nav class="navbar" id="navbar">
+            <div class="navbar-inner">
+                <a class="nav-brand" href="#" data-nav="dashboard">
+                    <div class="brand-mark">A</div>
+                    <span>Akysaya</span>
+                </a>
+                <div class="nav-links" id="navLinks">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </nav>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main id="main-content">
+
+            <!-- ==================== WELCOME PAGE ==================== -->
+            <div class="page" id="page-welcome">
+                <div class="welcome-hero">
+                    <div class="badge mb-24 slide-up" style="animation-delay: 0ms;">
+                        <span class="status-dot violet"></span>
+                        Умное управление финансами
+                    </div>
+                    <h1 class="display mb-16 slide-up" style="animation-delay: 60ms;">
+                        Ваши финансы<br>под контролем
+                    </h1>
+                    <p class="subheading text-muted mb-32 slide-up" style="max-width: 560px; animation-delay: 120ms;">
+                        Отслеживайте расходы, ставьте цели, получайте умные рекомендации и достигайте финансовой свободы.
+                    </p>
+                    <div class="flex gap-16 justify-center slide-up" style="animation-delay: 180ms;">
+                        <button class="btn btn-lg btn-primary" data-nav="register">
+                            Создать аккаунт
+                        </button>
+                        <button class="btn btn-lg" data-nav="login">
+                            Войти
+                        </button>
+                    </div>
+                </div>
+
+                <div class="container section">
+                    <div class="grid grid-3 stagger mb-48">
+                        <div class="text-center">
+                            <div class="stat-number">5,000+</div>
+                            <div class="stat-label">Довольных пользователей</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="stat-number">25M+ ₽</div>
+                            <div class="stat-label">Сэкономлено в 2024</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="stat-number">98%</div>
+                            <div class="stat-label">Довольных клиентов</div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-48">
+                        <h3 class="heading-sm text-center mb-24">Как это работает — 3 шага</h3>
+                        <div class="grid grid-3 gap-24">
+                            <div class="onboard-step">
+                                <span class="onboard-num">1</span>
+                                <div>
+                                    <p class="body-sm" style="color:var(--color-white);">Зарегистрируйтесь</p>
+                                    <p class="caption text-muted mt-4">Нужны только имя пользователя и пароль. Email и телефон не нужны.</p>
+                                </div>
+                            </div>
+                            <div class="onboard-step">
+                                <span class="onboard-num">2</span>
+                                <div>
+                                    <p class="body-sm" style="color:var(--color-white);">Укажите зарплату и расходы</p>
+                                    <p class="caption text-muted mt-4">В настройках: доход, аренда и даты платежей. По желанию email для напоминаний.</p>
+                                </div>
+                            </div>
+                            <div class="onboard-step">
+                                <span class="onboard-num">3</span>
+                                <div>
+                                    <p class="body-sm" style="color:var(--color-white);">Добавляйте операции</p>
+                                    <p class="caption text-muted mt-4">Дашборд сам посчитает баланс, покажет графики и подскажет, где сэкономить.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="heading text-center mb-32">Наши возможности</h2>
+                    <div class="grid grid-3 stagger gap-24">
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">📊</div>
+                            <h3 class="heading-sm mb-8">Детальная аналитика</h3>
+                            <p class="text-muted body-sm">Интерактивные графики и диаграммы, которые показывают куда уходят ваши деньги.</p>
+                        </div>
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">💡</div>
+                            <h3 class="heading-sm mb-8">Подсказки по бюджету</h3>
+                            <p class="text-muted body-sm">Дашборд замечает перекосы: дорогая аренда, мало сбережений, одна категория съедает бюджет.</p>
+                        </div>
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">🔔</div>
+                            <h3 class="heading-sm mb-8">Умные уведомления</h3>
+                            <p class="text-muted body-sm">Напоминания об аренде, кредитах, подписках и других регулярных платежах.</p>
+                        </div>
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">🏆</div>
+                            <h3 class="heading-sm mb-8">Достижения</h3>
+                            <p class="text-muted body-sm">Игровая система мотивации за финансовые цели и разумные траты.</p>
+                        </div>
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">📱</div>
+                            <h3 class="heading-sm mb-8">Мультиплатформа</h3>
+                            <p class="text-muted body-sm">Доступ с любого устройства. Все данные синхронизируются в реальном времени.</p>
+                        </div>
+                        <div class="feature-card-welcome">
+                            <div class="feature-icon-welcome">🔒</div>
+                            <h3 class="heading-sm mb-8">Безопасность</h3>
+                            <p class="text-muted body-sm">Пароли хранятся только в виде хеша, вход защищён капчей и лимитом попыток. Без рекламы и трекеров.</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-48">
+                        <h2 class="heading mb-16">Готовы начать?</h2>
+                        <p class="text-muted mb-24">Присоединяйтесь к тысячам пользователей, которые уже улучшили своё финансовое положение.</p>
+                        <div class="flex gap-16 justify-center">
+                            <button class="btn btn-lg btn-primary" data-nav="register">
+                                Создать аккаунт
+                            </button>
+                            <button class="btn btn-lg" data-nav="login">
+                                Войти в аккаунт
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ==================== LOGIN PAGE ==================== -->
+            <div class="page" id="page-login">
+                <div class="container" style="max-width: 480px; padding-top: 64px;">
+                    <div class="text-center mb-32">
+                        <div class="badge mb-16">
+                            <span class="status-dot blue"></span>
+                            Вход в аккаунт
+                        </div>
+                        <h1 class="heading" style="font-size: 40px;">Вход</h1>
+                        <p class="text-muted mt-8">Войдите для управления финансами</p>
+                    </div>
+
+                    <div class="card">
+                        <form id="loginForm" data-form="login">
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Имя пользователя</label>
+                                <input type="text" class="input" name="username" placeholder="Введите имя" autocomplete="username" required minlength="3" maxlength="32">
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Пароль</label>
+                                <div class="input-group">
+                                    <input type="password" class="input" id="loginPassword" name="password" placeholder="Введите пароль" autocomplete="current-password" required>
+                                    <button type="button" class="btn" data-action="toggle-password" data-arg="loginPassword" style="border-radius:0 var(--radius-sm) var(--radius-sm) 0;">👁</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="form-check">
+                                    <input type="checkbox" name="remember" id="loginRemember">
+                                    <span class="body-sm">Запомнить меня на этом устройстве</span>
+                                </label>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block" for="loginCaptcha">Код с картинки</label>
+                                <div class="captcha-box">
+                                    <img class="captcha-img" id="loginCaptchaImg" alt="Код проверки: 5 латинских букв и цифр" width="200" height="70">
+                                    <button type="button" class="btn" data-action="captcha-refresh" data-arg="login" title="Показать другой код" aria-label="Показать другой код">↻</button>
+                                </div>
+                                <input type="text" class="input captcha-input" id="loginCaptcha" placeholder="Введите 5 символов с картинки" required minlength="5" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                                <p class="caption text-iron mt-4">Регистр не важен. Не разобрать — нажмите ↻.</p>
+                            </div>
+                            <div class="hp-field" aria-hidden="true">
+                                <label>Не заполняйте это поле <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-full btn-lg mb-16">
+                                Войти в аккаунт
+                            </button>
+
+                            <div class="divider"></div>
+
+                            <div class="text-center">
+                                <p class="text-muted body-sm mb-12">Ещё нет аккаунта?</p>
+                                <button type="button" class="btn w-full" data-nav="register">
+                                    Создать новый аккаунт
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="grid grid-3 gap-16 mt-24">
+                        <div class="security-frame">
+                            <div class="icon text-green">🔒</div>
+                            <h6>Пароль</h6>
+                            <small>Хранится только хеш</small>
+                        </div>
+                        <div class="security-frame">
+                            <div class="icon text-blue">🛡</div>
+                            <h6>Защита входа</h6>
+                            <small>Капча и лимит попыток</small>
+                        </div>
+                        <div class="security-frame">
+                            <div class="icon text-amber">👤</div>
+                            <h6>Приватность</h6>
+                            <small>Без рекламы и трекеров</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== REGISTER PAGE ==================== -->
+            <div class="page" id="page-register">
+                <div class="container" style="max-width: 480px; padding-top: 64px;">
+                    <div class="text-center mb-32">
+                        <div class="badge mb-16">
+                            <span class="status-dot green"></span>
+                            Регистрация
+                        </div>
+                        <h1 class="heading" style="font-size: 40px;">Регистрация</h1>
+                        <p class="text-muted mt-8">Создайте аккаунт для начала работы</p>
+                    </div>
+
+                    <div class="card">
+                        <form id="registerForm" data-form="register">
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Имя пользователя</label>
+                                <input type="text" class="input" name="username" placeholder="Придумайте уникальное имя" autocomplete="username" required minlength="3" maxlength="32">
+                                <p class="caption text-iron mt-4">3–32 символа, используется для входа</p>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Пароль</label>
+                                <input type="password" class="input" id="regPassword" name="password" placeholder="Минимум 8 символов" autocomplete="new-password" required>
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strengthFill"></div>
+                                </div>
+                                <div class="strength-text" id="strengthText"></div>
+                                <div class="rule-list">
+                                    <span id="ruleLength">8+ симв.</span>
+                                    <span id="ruleUpper">A-Z</span>
+                                    <span id="ruleNumber">0-9</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Подтвердите пароль</label>
+                                <input type="password" class="input" id="regConfirm" name="confirm_password" placeholder="Повторите пароль" autocomplete="new-password" required>
+                                <div id="matchMessage" class="mt-4" style="font-size: var(--text-caption);"></div>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block" for="regCaptcha">Код с картинки</label>
+                                <div class="captcha-box">
+                                    <img class="captcha-img" id="regCaptchaImg" alt="Код проверки: 5 латинских букв и цифр" width="200" height="70">
+                                    <button type="button" class="btn" data-action="captcha-refresh" data-arg="register" title="Показать другой код" aria-label="Показать другой код">↻</button>
+                                </div>
+                                <input type="text" class="input captcha-input" id="regCaptcha" placeholder="Введите 5 символов с картинки" required minlength="5" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                                <p class="caption text-iron mt-4">Регистр не важен. Не разобрать — нажмите ↻.</p>
+                            </div>
+                            <div class="hp-field" aria-hidden="true">
+                                <label>Не заполняйте это поле <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                            </div>
+
+                            <div class="mb-16">
+                                <label class="form-check">
+                                    <input type="checkbox" id="regTerms" name="accept_terms" required>
+                                    <span class="body-sm">Я принимаю <a href="#terms" class="text-violet" data-nav="terms">условия использования</a> и даю согласие на обработку данных по <a href="#privacy" class="text-violet" data-nav="privacy">политике конфиденциальности</a></span>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-full btn-lg mb-16">
+                                Создать аккаунт
+                            </button>
+
+                            <div class="divider"></div>
+
+                            <div class="text-center">
+                                <p class="text-muted body-sm mb-12">Уже есть аккаунт?</p>
+                                <button type="button" class="btn w-full" data-nav="login">
+                                    Войти в существующий аккаунт
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="grid grid-3 gap-16 mt-24">
+                        <div class="security-frame">
+                            <div class="icon text-green">🔒</div>
+                            <h6>Пароль</h6>
+                            <small>Хранится только хеш</small>
+                        </div>
+                        <div class="security-frame">
+                            <div class="icon text-blue">🛡</div>
+                            <h6>Защита входа</h6>
+                            <small>Капча и лимит попыток</small>
+                        </div>
+                        <div class="security-frame">
+                            <div class="icon text-amber">👤</div>
+                            <h6>Приватность</h6>
+                            <small>Без рекламы и трекеров</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== DASHBOARD PAGE ==================== -->
+            <div class="page" id="page-dashboard">
+                <div class="container">
+                    <!-- Header -->
+                    <div class="flex justify-between items-center mb-32">
+                        <div>
+                            <div class="badge mb-8">
+                                <span class="status-dot green"></span>
+                                <span id="dashDate" class="mono"></span>
+                            </div>
+                            <h1 class="heading" style="font-size: 40px;">Дашборд</h1>
+                        </div>
+                        <div class="text-right">
+                            <div class="mono text-violet" id="dashTime" style="font-size: var(--text-subheading);"></div>
+                            <p class="caption text-muted mt-4">Обновлено: <span id="lastUpdated"></span></p>
+                            <button class="btn btn-primary btn-sm mt-8" data-nav="add">+ Добавить операцию</button>
+                        </div>
+                    </div>
+
+                    <!-- Base Currency Selector -->
+                    <div class="card mb-24">
+                        <div class="flex items-center gap-16 flex-wrap">
+                            <span class="body-sm text-muted">Базовая валюта:</span>
+                            <select class="input select" id="baseCurrency" style="width: auto; min-width: 160px;">
+                                <option value="USD">USD — Доллар США</option>
+                                <option value="EUR">EUR — Евро</option>
+                                <option value="GBP">GBP — Фунт стерлингов</option>
+                                <option value="RUB" selected>RUB — Российский рубль</option>
+                                <option value="CNY">CNY — Китайский юань</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-4 gap-16 mb-24">
+                        <div class="card stat-card">
+                            <div class="flex items-center gap-8">
+                                <span class="status-dot green"></span>
+                                <span class="stat-label">Доходы</span>
+                            </div>
+                            <div class="stat-value text-green" id="statIncome">0 ₽</div>
+                            <div class="stat-change">За текущий месяц</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="flex items-center gap-8">
+                                <span class="status-dot red"></span>
+                                <span class="stat-label">Расходы</span>
+                            </div>
+                            <div class="stat-value text-red" id="statExpenses">0 ₽</div>
+                            <div class="stat-change">За текущий месяц</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="flex items-center gap-8">
+                                <span class="status-dot blue"></span>
+                                <span class="stat-label">Баланс</span>
+                            </div>
+                            <div class="stat-value text-blue" id="statBalance">0 ₽</div>
+                            <div class="stat-change">Текущий остаток</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="flex items-center gap-8">
+                                <span class="status-dot amber"></span>
+                                <span class="stat-label">Цель</span>
+                            </div>
+                            <div class="flex items-center gap-8">
+                                <div class="stat-value text-amber" id="statGoal">5000 ₽</div>
+                                <button class="btn btn-sm btn-ghost" data-action="goal-open" title="Изменить цель">✎</button>
+                            </div>
+                            <div class="progress mt-8">
+                                <div class="progress-bar amber" id="goalProgressBar" style="width: 0%"></div>
+                            </div>
+                            <div class="stat-change" id="goalProgressText">0% выполнено</div>
+                        </div>
+                    </div>
+
+                    <!-- AI Advice -->
+                    <div class="card mb-24 hidden" id="aiAdviceCard">
+                        <div class="flex items-center gap-8 mb-16">
+                            <span class="status-dot violet"></span>
+                            <h3 class="heading-sm">Финансовые советы</h3>
+                        </div>
+                        <div id="aiAdviceList"></div>
+                        <div class="mt-16">
+                            <button class="btn" data-nav="settings">
+                                Настроить параметры →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Grid -->
+                    <div class="grid grid-2 gap-24" style="grid-template-columns: 2fr 1fr;">
+                        <!-- Left Column -->
+                        <div>
+                            <!-- Expenses Chart -->
+                            <div class="card mb-24">
+                                <div class="flex items-center gap-8 mb-16">
+                                    <span class="status-dot violet"></span>
+                                    <h3 class="heading-sm">Траты по категориям</h3>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="expensesChart"></canvas>
+                                </div>
+                                <p class="caption text-muted mt-16">Диаграмма показывает процентное соотношение трат по категориям за текущий месяц.</p>
+                            </div>
+
+                            <!-- Category Details -->
+                            <div class="card" id="categoryDetailsCard">
+                                <div class="flex items-center gap-8 mb-16">
+                                    <span class="status-dot blue"></span>
+                                    <h3 class="heading-sm">Подробности по категориям</h3>
+                                </div>
+                                <div class="table-wrap">
+                                    <table class="table" id="categoryTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Категория</th>
+                                                <th class="text-right">Сумма</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="categoryTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div>
+                            <!-- Currency Rates -->
+                            <div class="card mb-24">
+                                <div class="flex items-center gap-8 mb-16">
+                                    <span class="status-dot blue"></span>
+                                    <h3 class="heading-sm">Курсы валют</h3>
+                                </div>
+                                <div id="currencyRatesList"></div>
+                            </div>
+
+                            <!-- Crypto Rates -->
+                            <div class="card">
+                                <div class="flex items-center gap-8 mb-16">
+                                    <span class="status-dot violet"></span>
+                                    <h3 class="heading-sm">Криптовалюты</h3>
+                                </div>
+                                <div id="cryptoRatesList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== HISTORY PAGE ==================== -->
+            <div class="page" id="page-history">
+                <div class="container">
+                    <div class="flex justify-between items-center mb-24">
+                        <div>
+                            <div class="badge mb-8">
+                                <span class="status-dot blue"></span>
+                                История
+                            </div>
+                            <h1 class="heading" style="font-size: 40px;">История операций</h1>
+                        </div>
+                        <button class="btn" data-nav="dashboard">
+                            ← Назад
+                        </button>
+                    </div>
+
+                    <div class="card" id="historyCard">
+                        <div class="table-wrap">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Тип</th>
+                                        <th>Категория</th>
+                                        <th class="text-right">Сумма</th>
+                                        <th class="text-right" style="width: 48px;"><span class="sr-only">Действия</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="empty-state hidden" id="historyEmpty">
+                        <div class="empty-state-icon">📄</div>
+                        <h3 class="heading-sm mb-8">У вас ещё нет операций</h3>
+                        <p class="text-muted mb-24">Добавьте первую операцию, чтобы начать отслеживать финансы</p>
+                        <button class="btn btn-primary" data-nav="add">
+                            + Добавить первую операцию
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== ADD TRANSACTION PAGE ==================== -->
+            <div class="page" id="page-add">
+                <div class="container" style="max-width: 560px;">
+                    <div class="text-center mb-32">
+                        <div class="badge mb-8">
+                            <span class="status-dot green"></span>
+                            Новая операция
+                        </div>
+                        <h1 class="heading" style="font-size: 40px;">Добавить операцию</h1>
+                    </div>
+
+                    <div class="card">
+                        <form id="addTransactionForm" data-form="add-tx">
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Тип операции</label>
+                                <div class="radio-group">
+                                    <div class="radio-option">
+                                        <input type="radio" name="type" id="typeIncome" value="income" checked>
+                                        <label for="typeIncome">
+                                            <span class="text-green">↑</span> Доход
+                                        </label>
+                                    </div>
+                                    <div class="radio-option">
+                                        <input type="radio" name="type" id="typeExpense" value="expense">
+                                        <label for="typeExpense">
+                                            <span class="text-red">↓</span> Расход
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Сумма (₽)</label>
+                                <input type="number" step="0.01" class="input" name="amount" placeholder="0.00" required min="0.01">
+                            </div>
+
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Категория</label>
+                                <select class="input select" name="category" id="txCategory" required>
+                                    <option value="">Выберите категорию...</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Дата</label>
+                                <input type="date" class="input" name="date" id="txDate" required>
+                                <p class="caption text-iron mt-4">По умолчанию — сегодня. Можно указать прошедший день, если забыли записать трату.</p>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-full btn-lg mb-16">
+                                ✓ Добавить операцию
+                            </button>
+
+                            <div class="divider"></div>
+
+                            <button type="button" class="btn w-full" data-nav="dashboard">
+                                ← Назад к дашборду
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== SETTINGS PAGE ==================== -->
+            <div class="page" id="page-settings">
+                <div class="container" style="max-width: 640px;">
+                    <div class="text-center mb-32">
+                        <div class="badge mb-8">
+                            <span class="status-dot violet"></span>
+                            Настройки
+                        </div>
+                        <h1 class="heading" style="font-size: 40px;">Настройки профиля</h1>
+                    </div>
+
+                    <div class="card">
+                        <form id="settingsForm" data-form="settings">
+                            <div class="grid grid-2 gap-16 mb-16">
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block">Ежемесячная зарплата (₽)</label>
+                                    <input type="number" step="0.01" class="input" name="salary" id="setSalary" placeholder="0" min="0">
+                                </div>
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block">День получения зарплаты</label>
+                                    <input type="number" min="1" max="31" class="input" name="salary_day" id="setSalaryDay" value="1" required>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-2 gap-16 mb-16">
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block">Аренда / ипотека (₽)</label>
+                                    <input type="number" step="0.01" class="input" name="rent_expense" id="setRent" placeholder="0" min="0">
+                                </div>
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block">День оплаты аренды</label>
+                                    <input type="number" min="1" max="31" class="input" name="rent_day" id="setRentDay" value="1" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Email для уведомлений</label>
+                                <input type="email" class="input" name="email" id="setEmail" placeholder="you@example.com">
+                                <p class="caption text-iron mt-4">Сюда придёт напоминание за 3 дня до оплаты аренды и письмо, если расходы за месяц превысят доход (если на сервере настроена почта).</p>
+                            </div>
+
+                            <div class="flex gap-8">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    💾 Сохранить
+                                </button>
+                                <button type="button" class="btn btn-lg" data-nav="dashboard">
+                                    ← Назад
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="divider"></div>
+
+                        <div class="card card-sm" style="background: rgba(255,255,255,0.02);">
+                            <div class="flex items-center gap-8 mb-8">
+                                <span class="status-dot blue"></span>
+                                <h4 class="body-sm" style="color: var(--color-bone-white);">Как это работает?</h4>
+                            </div>
+                            <p class="body-sm text-muted">По этим данным дашборд подсказывает, когда платить за аренду, сколько откладывать и на чём можно сэкономить. Email нужен только для напоминаний, его можно не указывать.</p>
+                        </div>
+                    </div>
+
+                    <!-- Theme customization -->
+                    <div class="card mt-24">
+                        <div class="flex items-center gap-8 mb-16">
+                            <span class="status-dot amber"></span>
+                            <h3 class="heading-sm">Оформление</h3>
+                        </div>
+                        <form data-form="theme">
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Акцентный цвет</label>
+                                <div class="radio-group">
+                                    <div class="radio-option">
+                                        <input type="radio" name="accent" id="accentViolet" value="violet" checked>
+                                        <label for="accentViolet">Фиолетовый</label>
+                                    </div>
+                                    <div class="radio-option">
+                                        <input type="radio" name="accent" id="accentBlue" value="blue">
+                                        <label for="accentBlue">Синий</label>
+                                    </div>
+                                    <div class="radio-option">
+                                        <input type="radio" name="accent" id="accentGreen" value="green">
+                                        <label for="accentGreen">Зелёный</label>
+                                    </div>
+                                    <div class="radio-option">
+                                        <input type="radio" name="accent" id="accentAmber" value="amber">
+                                        <label for="accentAmber">Янтарный</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-16">
+                                <label class="body-sm text-muted mb-8 block">Фоновая картинка (ссылка на изображение)</label>
+                                <input type="url" class="input" id="themeBgUrl" placeholder="https://example.com/photo.jpg">
+                                <p class="caption text-iron mt-4">Оставьте пустым, чтобы вернуть стандартный чёрный фон.</p>
+                            </div>
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block">Затемнение фона: <span id="overlayVal">55%</span></label>
+                                <input type="range" id="themeOverlay" min="0" max="90" value="55" style="width:100%;">
+                            </div>
+                            <div class="flex gap-8">
+                                <button type="submit" class="btn btn-primary">Применить тему</button>
+                                <button type="button" class="btn" data-action="theme-reset">Сбросить</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Data backup -->
+                    <div class="card mt-24">
+                        <div class="flex items-center gap-8 mb-16">
+                            <span class="status-dot green"></span>
+                            <h3 class="heading-sm">Резервная копия данных</h3>
+                        </div>
+                        <p class="body-sm text-muted mb-16">Данные хранятся на сервере в вашем аккаунте. Файл-копия пригодится для переноса или архива. Восстановление добавляет операции из файла к текущим, дубликаты пропускаются. Подходят и копии из старой браузерной версии.</p>
+                        <div class="flex gap-8 flex-wrap">
+                            <button type="button" class="btn" data-action="backup-export">⬇ Скачать копию (.json)</button>
+                            <label class="btn" style="cursor:pointer;">
+                                ⬆ Восстановить из файла
+                                <input type="file" accept="application/json,.json" id="backupFile" style="display:none;">
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Account deletion -->
+                    <div class="card mt-24 danger-zone">
+                        <div class="flex items-center gap-8 mb-16">
+                            <span class="status-dot red"></span>
+                            <h3 class="heading-sm">Удаление аккаунта</h3>
+                        </div>
+                        <p class="body-sm text-muted mb-16">Аккаунт, все операции и настройки удалятся с сервера сразу и навсегда. Перед удалением можно скачать резервную копию.</p>
+                        <form data-form="delete-account">
+                            <label class="body-sm text-muted mb-8 block" for="deletePassword">Текущий пароль</label>
+                            <input type="password" class="input mb-16" id="deletePassword" name="password" autocomplete="current-password" required>
+                            <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ==================== PRIVACY PAGE ==================== -->
+            <div class="page" id="page-privacy">
+                <div class="container legal">
+                    <div class="badge mb-8">
+                        <span class="status-dot blue"></span>
+                        Документы
+                    </div>
+                    <h1 class="heading mb-8 legal-title">Политика конфиденциальности</h1>
+                    <p class="caption text-muted mb-24">Редакция от {{ terms_version_human }}</p>
+
+                    <h2>1. Кто обрабатывает данные</h2>
+                    <p>Оператор персональных данных: {% if legal_owner %}{{ legal_owner }}{% else %}владелец сервиса Akysaya{% endif %} (далее «мы»). Политика описывает, какие данные собирает сервис Akysaya, зачем и как их защищает. Регистрируясь, вы даёте согласие на обработку данных на этих условиях.</p>
+
+                    <h2>2. Какие данные мы храним</h2>
+                    <ul>
+                        <li><b>Аккаунт:</b> имя пользователя и пароль. Пароль хранится только в виде необратимого хеша (scrypt), сам пароль мы не знаем.</li>
+                        <li><b>Финансовые записи, которые вы вводите:</b> операции (тип, сумма, категория, дата), зарплата и аренда с днями платежей, финансовая цель.</li>
+                        <li><b>Email</b>, если вы сами его укажете. Он нужен только для напоминаний.</li>
+                        <li><b>Оформление:</b> акцентный цвет, ссылка на фоновую картинку, затемнение фона.</li>
+                        <li><b>Технические данные:</b> IP-адрес и время входов, неудачных попыток входа, удаления операций и других событий безопасности; дата и версия принятых условий.</li>
+                    </ul>
+                    <p>Мы не просим ФИО, телефон, паспортные данные, номера карт и банковские пароли. Аналитики, рекламы и сторонних трекеров на сайте нет.</p>
+
+                    <h2>3. Зачем</h2>
+                    <ul>
+                        <li>Чтобы сервис работал: считал баланс, строил графики, давал подсказки по бюджету.</li>
+                        <li>Чтобы отправлять email-напоминания об аренде и письмо о превышении расходов, если вы указали email.</li>
+                        <li>Чтобы защищать аккаунты от взлома и сервис от злоупотреблений.</li>
+                        <li>Чтобы выполнять требования закона.</li>
+                    </ul>
+
+                    <h2>4. Cookie и хранилище браузера</h2>
+                    <p>Сайт ставит одну cookie: <code>akysaya_session</code>. Она нужна для входа и содержит случайный идентификатор сессии. Сессия действует 24 часа, а с отметкой «Запомнить меня» 30 дней. После выхода из аккаунта она сразу перестаёт работать.</p>
+                    <p>В памяти браузера (localStorage) хранятся: тема оформления, выбранная валюта, кэш курсов валют, имя пользователя (если включено «Запомнить меня») и отметки о показанных поздравлениях. Эти данные остаются на вашем устройстве.</p>
+
+                    <h2>5. Кому данные передаются</h2>
+                    <p>Мы не продаём данные и не передаём их для рекламы. Сторонние сервисы участвуют только в следующих случаях:</p>
+                    <ul>
+                        <li><b>Google Fonts:</b> браузер загружает шрифты с серверов Google, и Google видит ваш IP-адрес.</li>
+                        <li><b>Фоновая картинка:</b> если вы указали ссылку на картинку, браузер загружает её с этого сайта, и он видит ваш IP-адрес.</li>
+                        <li><b>Курсы валют:</b> сервер сам запрашивает их у exchangerate-api.com и coingecko.com. Ваши данные туда не отправляются.</li>
+                        <li><b>Почта:</b> письма уходят через почтовый сервер, которым пользуется сервис. Ему передаются ваш email и текст письма.</li>
+                        <li><b>Государственные органы:</b> только по требованию, основанному на законе.</li>
+                    </ul>
+
+                    <h2>6. Сколько храним</h2>
+                    <p>Данные хранятся, пока существует аккаунт. Когда вы удаляете аккаунт, мы сразу удаляем его, все операции, настройки и сессии. Журнал безопасности ограничен по размеру: старые записи в нём перезаписываются новыми.</p>
+
+                    <h2>7. Как защищаем</h2>
+                    <p>Мы используем HTTPS, храним пароли в виде хеша, а сессии на сервере, чтобы их можно было отозвать. Вход защищён капчей и ограничением числа попыток, а заголовки безопасности защищают от подмены страницы и межсайтовых атак. Ни один сервис не может гарантировать абсолютную защиту. Используйте уникальный пароль.</p>
+
+                    <h2>8. Ваши права</h2>
+                    <ul>
+                        <li><b>Получить копию данных:</b> «Настройки» → «Скачать копию».</li>
+                        <li><b>Исправить данные:</b> в настройках и истории операций.</li>
+                        <li><b>Отказаться от писем:</b> очистите поле email.</li>
+                        <li><b>Удалить аккаунт и отозвать согласие:</b> «Настройки» → «Удаление аккаунта».</li>
+                    </ul>
+                    <p>{% if legal_email %}Пишите на <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>. Ответим в течение 10 рабочих дней.{% else %}Большую часть запросов можно выполнить самостоятельно в разделе «Настройки»: скачать копию данных, исправить их или удалить аккаунт.{% endif %}</p>
+
+                    <h2>9. Возраст</h2>
+                    <p>Сервис не предназначен для детей младше 14 лет.</p>
+
+                    <h2>10. Изменения</h2>
+                    <p>Новая редакция публикуется на этой странице с датой. Если изменения существенные, мы предупредим об этом на сайте.</p>
+                </div>
+            </div>
+
+            <!-- ==================== TERMS PAGE ==================== -->
+            <div class="page" id="page-terms">
+                <div class="container legal">
+                    <div class="badge mb-8">
+                        <span class="status-dot violet"></span>
+                        Документы
+                    </div>
+                    <h1 class="heading mb-8 legal-title">Условия использования</h1>
+                    <p class="caption text-muted mb-24">Редакция от {{ terms_version_human }}</p>
+
+                    <h2>1. О сервисе</h2>
+                    <p>Akysaya — бесплатный веб-сервис для учёта личных доходов и расходов. Сервисом управляет {% if legal_owner %}{{ legal_owner }}{% else %}владелец сервиса Akysaya{% endif %} (далее «мы»). Создавая аккаунт, вы принимаете эти условия и <a href="#privacy" data-nav="privacy">политику конфиденциальности</a>.</p>
+
+                    <h2>2. Аккаунт</h2>
+                    <ul>
+                        <li>Вам должно быть не меньше 14 лет.</li>
+                        <li>Вы отвечаете за сохранность пароля и за действия в своём аккаунте. Не передавайте пароль другим людям.</li>
+                        <li>Восстановить забытый пароль сейчас нельзя: записывайте его в надёжном месте.</li>
+                    </ul>
+
+                    <h2>3. Что запрещено</h2>
+                    <ul>
+                        <li>Автоматически регистрировать аккаунты, подбирать пароли, обходить капчу и ограничения.</li>
+                        <li>Пытаться получить доступ к чужим данным, искать и использовать уязвимости, создавать чрезмерную нагрузку.</li>
+                        <li>Использовать сервис для незаконной деятельности или указывать в качестве фона ссылки на незаконные материалы.</li>
+                    </ul>
+                    <p>Если вы нашли уязвимость, сообщите нам о ней, не пользуясь ею.</p>
+
+                    <h2>4. Ваши данные</h2>
+                    <p>Данные, которые вы вводите, принадлежат вам. Вы разрешаете нам хранить и обрабатывать их только для работы сервиса. Регулярно скачивайте резервную копию в настройках.</p>
+
+                    <h2>5. Это не финансовая консультация</h2>
+                    <p>Подсказки на дашборде формируются автоматически по простым правилам и носят справочный характер. Курсы валют и криптовалют приблизительные и могут запаздывать. Не принимайте по ним финансовых решений.</p>
+
+                    <h2>6. Доступность</h2>
+                    <p>Сервис предоставляется «как есть». Мы стараемся, чтобы он работал без сбоев, но не гарантируем этого и можем менять или убирать функции.</p>
+
+                    <h2>7. Ответственность</h2>
+                    <p>В пределах, допустимых законом, мы не отвечаем за косвенные убытки и упущенную выгоду, а также за последствия решений, принятых на основе данных сервиса.</p>
+
+                    <h2>8. Прекращение</h2>
+                    <p>Вы можете удалить аккаунт в любой момент в настройках. Если вы нарушите эти условия, мы можем заблокировать или удалить аккаунт.</p>
+
+                    <h2>9. Изменения и право</h2>
+                    <p>Новая редакция публикуется на этой странице с датой. Если вы продолжаете пользоваться сервисом после её публикации, вы соглашаетесь с ней. К этим условиям применяется законодательство Российской Федерации. Споры сначала решаются переговорами.</p>
+
+                    <h2>10. Связь</h2>
+                    <p>{% if legal_email %}Пишите на <a href="mailto:{{ legal_email }}">{{ legal_email }}</a>. Ответим в течение 10 рабочих дней.{% else %}Большую часть запросов можно выполнить самостоятельно в разделе «Настройки»: скачать копию данных, исправить их или удалить аккаунт.{% endif %}</p>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="footer app-footer">
+            <div class="footer-inner">
+                <span class="text-muted caption">© {{ year }} Akysaya</span>
+                <div class="footer-links">
+                    <a href="#privacy" data-nav="privacy">Политика конфиденциальности</a>
+                    <a href="#terms" data-nav="terms">Условия использования</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- ===== GOAL MODAL ===== -->
+        <div class="modal-overlay" id="goalModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="heading-sm">Изменить финансовую цель</h3>
+                    <button class="modal-close" data-action="goal-close">×</button>
+                </div>
+                <form data-form="goal">
+                    <div class="mb-16">
+                        <label class="body-sm text-muted mb-8 block">Новая цель (₽)</label>
+                        <input type="number" class="input" id="goalInput" min="0" step="100" required>
+                    </div>
+                    <p class="caption text-iron mb-16">Достижения: 10K, 50K, 100K, 500K, 1M ₽</p>
+                    <div class="flex gap-8">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn" data-action="goal-close">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== CONFIRM MODAL ===== -->
+        <div class="modal-overlay" id="confirmModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="heading-sm" id="confirmTitle">Подтвердите действие</h3>
+                    <button class="modal-close" data-action="confirm-no">×</button>
+                </div>
+                <p class="body-sm text-muted mb-24" id="confirmText"></p>
+                <div class="flex gap-8">
+                    <button type="button" class="btn btn-danger" data-action="confirm-yes">Удалить</button>
+                    <button type="button" class="btn" data-action="confirm-no">Отмена</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

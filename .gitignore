@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Секреты и локальная конфигурация
+.env
+.env.*
+instance/
+
+# База данных (пароли и финансы пользователей)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Резервные копии и временное
+_backup_*/
+*.log
+logs/
+
+# Редактор и ОС
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Ключи и сертификаты
+*.pem
+*.key
+*.crt
+*.p12
+secret_key
+secrets.*
+
+# Личные заметки и неиспользуемые файлы
+продукт.txt
+image.png
+
+# Локальные настройки Claude Code и временные файлы
+.claude/
+*.bak
+*.tmp
