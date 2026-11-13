@@ -3,20 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Akysaya — учёт доходов и расходов, финансовые цели, графики трат и подсказки по бюджету.">
+    <meta name="description" content="Akysaya — учёт доходов и расходов: бюджеты по категориям, регулярные платежи с напоминаниями, импорт банковской выписки и графики по месяцам.">
     <meta name="theme-color" content="#000000">
     <title>Akysaya — Умное управление финансами</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%239281f7'/%3E%3Ctext x='12' y='17' font-size='13' font-family='Arial' text-anchor='middle' fill='white'%3EA%3C/text%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}">
     <script src="{{ url_for('static', filename='vendor/chart.umd-4.4.1.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/dropdown.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/fx.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/fluid.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
     <!-- Тема применяется до первой отрисовки, чтобы фон не «мигал» стандартным -->
     <script src="{{ url_for('static', filename='js/theme-boot.js') }}"></script>
+    <!-- Живой фон (Desktop/07-shader), затемнение и зерно плёнки -->
+    <canvas id="fluid" aria-hidden="true"></canvas>
+    <div class="veil" aria-hidden="true"></div>
+    <div class="grain" id="grain" aria-hidden="true"></div>
+    <div id="prog" aria-hidden="true"></div>
     <div id="app">
         <!-- Toast Container -->
         <div class="toast-container" id="toastContainer"></div>
@@ -43,44 +52,49 @@
             <!-- ==================== WELCOME PAGE ==================== -->
             <div class="page" id="page-welcome">
                 <div class="welcome-hero">
-                    <div class="badge mb-24 slide-up" style="animation-delay: 0ms;">
-                        <span class="status-dot violet"></span>
-                        Умное управление финансами
-                    </div>
-                    <h1 class="display mb-16 slide-up" style="animation-delay: 60ms;">
-                        Ваши финансы<br>под контролем
+                    <p class="klabel slide-up" style="justify-content:center;animation-delay:0ms;">Akysaya · учёт личных финансов</p>
+                    <h1 class="hero-title">
+                        <span class="line"><span style="transition-delay:.15s">Ваши деньги</span></span>
+                        <span class="line"><span class="h-grad" style="transition-delay:.3s">под контролем.</span></span>
                     </h1>
-                    <p class="subheading text-muted mb-32 slide-up" style="max-width: 560px; animation-delay: 120ms;">
-                        Отслеживайте расходы, ставьте цели, получайте умные рекомендации и достигайте финансовой свободы.
+                    <p class="subheading text-muted mb-32 slide-up" style="max-width: 620px; margin-left:auto; margin-right:auto; animation-delay: 200ms;">
+                        Доходы и расходы, бюджеты по категориям, регулярные платежи с напоминаниями и импорт банковской выписки. Всё в одном месте и без рекламы.
                     </p>
-                    <div class="flex gap-16 justify-center slide-up" style="animation-delay: 180ms;">
-                        <button class="btn btn-lg btn-primary" data-nav="register">
-                            Создать аккаунт
-                        </button>
-                        <button class="btn btn-lg" data-nav="login">
-                            Войти
-                        </button>
+                    <div class="flex gap-16 justify-center slide-up" style="animation-delay: 280ms;">
+                        <button class="btn btn-lg btn-primary" data-nav="register" data-magnetic>Создать аккаунт</button>
+                        <button class="btn btn-lg" data-nav="login" data-magnetic>Войти</button>
+                    </div>
+                    <div class="chips slide-up" style="animation-delay: 360ms;">
+                        <span class="chip"><i>0</i> рекламы</span>
+                        <span class="chip"><i>0</i> трекеров</span>
+                        <span class="chip"><i>CSV</i> из банка</span>
+                        <span class="chip"><i>JSON</i> бэкап в один клик</span>
+                    </div>
+                    <div class="scroll-hint" aria-hidden="true"><i></i>листайте</div>
+                </div>
+
+                <div class="marq" aria-hidden="true">
+                    <div class="marq-in">
+                        <div class="marq-g"><span>Доходы</span><b>✦</b><span>Расходы</span><b>✦</b><span>Бюджеты</span><b>✦</b><span>Подписки</span><b>✦</b><span>Кредиты</span><b>✦</b><span>Выписки</span><b>✦</b><span>Цели</span><b>✦</b><span>Категории</span><b>✦</b></div>
+                        <div class="marq-g"><span>Доходы</span><b>✦</b><span>Расходы</span><b>✦</b><span>Бюджеты</span><b>✦</b><span>Подписки</span><b>✦</b><span>Кредиты</span><b>✦</b><span>Выписки</span><b>✦</b><span>Цели</span><b>✦</b><span>Категории</span><b>✦</b></div>
                     </div>
                 </div>
 
                 <div class="container section">
-                    <div class="grid grid-3 stagger mb-48">
-                        <div class="text-center">
-                            <div class="stat-number">5,000+</div>
-                            <div class="stat-label">Довольных пользователей</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="stat-number">25M+ ₽</div>
-                            <div class="stat-label">Сэкономлено в 2024</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="stat-number">98%</div>
-                            <div class="stat-label">Довольных клиентов</div>
-                        </div>
+                    <section class="mb-48">
+                        <p class="klabel" data-reveal>Идея</p>
+                        <p class="mani" id="maniP">Деньги любят *счёт. Akysaya показывает, куда они *уходят, сама добавляет *подписки и кредиты, предупреждает, когда *бюджет на исходе, и помогает *откладывать. Без рекламы и без *трекеров.</p>
+                    </section>
+
+                    <div class="grid grid-4 gap-16 mb-48">
+                        <div class="stat-tile" data-reveal style="transition-delay:0ms"><b data-count="40" data-suffix="">0</b><span>своих категорий каждого типа</span></div>
+                        <div class="stat-tile" data-reveal style="transition-delay:80ms"><b data-count="100" data-suffix="">0</b><span>регулярных платежей</span></div>
+                        <div class="stat-tile" data-reveal style="transition-delay:160ms"><b data-count="3" data-suffix=" дня">0</b><span>до платежа — напоминание</span></div>
+                        <div class="stat-tile" data-reveal style="transition-delay:240ms"><b data-count="0" data-suffix="">0</b><span>рекламы и трекеров</span></div>
                     </div>
 
-                    <div class="card mb-48">
-                        <h3 class="heading-sm text-center mb-24">Как это работает — 3 шага</h3>
+                    <div class="card mb-48" data-reveal>
+                        <p class="klabel mb-16">Как начать</p>
                         <div class="grid grid-3 gap-24">
                             <div class="onboard-step">
                                 <span class="onboard-num">1</span>
@@ -92,68 +106,70 @@
                             <div class="onboard-step">
                                 <span class="onboard-num">2</span>
                                 <div>
-                                    <p class="body-sm" style="color:var(--color-white);">Укажите зарплату и расходы</p>
-                                    <p class="caption text-muted mt-4">В настройках: доход, аренда и даты платежей. По желанию email для напоминаний.</p>
+                                    <p class="body-sm" style="color:var(--color-white);">Загрузите выписку или добавьте операции</p>
+                                    <p class="caption text-muted mt-4">CSV из банка импортируется за минуту. Подписки и кредиты заведите как регулярные платежи.</p>
                                 </div>
                             </div>
                             <div class="onboard-step">
                                 <span class="onboard-num">3</span>
                                 <div>
-                                    <p class="body-sm" style="color:var(--color-white);">Добавляйте операции</p>
-                                    <p class="caption text-muted mt-4">Дашборд сам посчитает баланс, покажет графики и подскажет, где сэкономить.</p>
+                                    <p class="body-sm" style="color:var(--color-white);">Поставьте бюджеты</p>
+                                    <p class="caption text-muted mt-4">Дашборд покажет остаток по каждой категории и подскажет, где сэкономить.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <h2 class="heading text-center mb-32">Наши возможности</h2>
-                    <div class="grid grid-3 stagger gap-24">
-                        <div class="feature-card-welcome">
+                    <p class="klabel" data-reveal>Возможности</p>
+                    <h2 class="heading mb-32" data-reveal style="font-size: clamp(32px, 4.5vw, 56px); text-transform: uppercase;">Инструмент,<br>а не таблица.</h2>
+                    <div class="grid grid-3 gap-24">
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:0ms">
+                            <span class="fnum">/01</span>
                             <div class="feature-icon-welcome">📊</div>
-                            <h3 class="heading-sm mb-8">Детальная аналитика</h3>
-                            <p class="text-muted body-sm">Интерактивные графики и диаграммы, которые показывают куда уходят ваши деньги.</p>
+                            <h3 class="heading-sm mb-8">Аналитика по месяцам</h3>
+                            <p class="text-muted body-sm">Переключайте месяцы, сравнивайте с прошлым и смотрите график доходов и расходов за полгода.</p>
                         </div>
-                        <div class="feature-card-welcome">
-                            <div class="feature-icon-welcome">💡</div>
-                            <h3 class="heading-sm mb-8">Подсказки по бюджету</h3>
-                            <p class="text-muted body-sm">Дашборд замечает перекосы: дорогая аренда, мало сбережений, одна категория съедает бюджет.</p>
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:70ms">
+                            <span class="fnum">/02</span>
+                            <div class="feature-icon-welcome">🎯</div>
+                            <h3 class="heading-sm mb-8">Бюджеты по категориям</h3>
+                            <p class="text-muted body-sm">«На еду 15 000 ₽ в месяц»: полоса прогресса покажет остаток и предупредит о перерасходе.</p>
                         </div>
-                        <div class="feature-card-welcome">
-                            <div class="feature-icon-welcome">🔔</div>
-                            <h3 class="heading-sm mb-8">Умные уведомления</h3>
-                            <p class="text-muted body-sm">Напоминания об аренде, кредитах, подписках и других регулярных платежах.</p>
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:140ms">
+                            <span class="fnum">/03</span>
+                            <div class="feature-icon-welcome">🔁</div>
+                            <h3 class="heading-sm mb-8">Регулярные платежи</h3>
+                            <p class="text-muted body-sm">Подписки, кредиты и коммуналка добавляются сами в нужный день. Ближайшие платежи видны на дашборде, а за 3 дня приходит письмо.</p>
                         </div>
-                        <div class="feature-card-welcome">
-                            <div class="feature-icon-welcome">🏆</div>
-                            <h3 class="heading-sm mb-8">Достижения</h3>
-                            <p class="text-muted body-sm">Игровая система мотивации за финансовые цели и разумные траты.</p>
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:210ms">
+                            <span class="fnum">/04</span>
+                            <div class="feature-icon-welcome">🏦</div>
+                            <h3 class="heading-sm mb-8">Импорт выписки</h3>
+                            <p class="text-muted body-sm">CSV из Т-Банка, Сбера и других банков: столбцы и категории определяются автоматически, дубликаты пропускаются.</p>
                         </div>
-                        <div class="feature-card-welcome">
-                            <div class="feature-icon-welcome">📱</div>
-                            <h3 class="heading-sm mb-8">Мультиплатформа</h3>
-                            <p class="text-muted body-sm">Доступ с любого устройства. Все данные синхронизируются в реальном времени.</p>
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:280ms">
+                            <span class="fnum">/05</span>
+                            <div class="feature-icon-welcome">🏷️</div>
+                            <h3 class="heading-sm mb-8">Свои категории</h3>
+                            <p class="text-muted body-sm">Создавайте категории под себя: «Спорт», «Кот», «Ипотека». Ищите по комментариям и фильтруйте историю.</p>
                         </div>
-                        <div class="feature-card-welcome">
+                        <div class="feature-card-welcome" data-reveal data-tilt style="transition-delay:350ms">
+                            <span class="fnum">/06</span>
                             <div class="feature-icon-welcome">🔒</div>
                             <h3 class="heading-sm mb-8">Безопасность</h3>
                             <p class="text-muted body-sm">Пароли хранятся только в виде хеша, вход защищён капчей и лимитом попыток. Без рекламы и трекеров.</p>
                         </div>
                     </div>
 
-                    <div class="text-center mt-48">
-                        <h2 class="heading mb-16">Готовы начать?</h2>
-                        <p class="text-muted mb-24">Присоединяйтесь к тысячам пользователей, которые уже улучшили своё финансовое положение.</p>
+                    <div class="text-center mt-48" data-reveal>
+                        <h2 class="heading mb-16" style="font-size: clamp(30px, 4vw, 48px); text-transform: uppercase;">Готовы <span class="h-grad">начать?</span></h2>
+                        <p class="text-muted mb-24">Регистрация занимает минуту. Данные можно скачать или удалить в любой момент.</p>
                         <div class="flex gap-16 justify-center">
-                            <button class="btn btn-lg btn-primary" data-nav="register">
-                                Создать аккаунт
-                            </button>
-                            <button class="btn btn-lg" data-nav="login">
-                                Войти в аккаунт
-                            </button>
+                            <button class="btn btn-lg btn-primary" data-nav="register" data-magnetic>Создать аккаунт</button>
+                            <button class="btn btn-lg" data-nav="login" data-magnetic>Войти в аккаунт</button>
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <!-- ==================== LOGIN PAGE ==================== -->
@@ -336,27 +352,32 @@
             <!-- ==================== DASHBOARD PAGE ==================== -->
             <div class="page" id="page-dashboard">
                 <div class="container">
-                    <!-- Header -->
-                    <div class="flex justify-between items-center mb-32">
+                    <div class="flex justify-between items-center mb-32 dash-head">
                         <div>
                             <div class="badge mb-8">
                                 <span class="status-dot green"></span>
                                 <span id="dashDate" class="mono"></span>
                             </div>
                             <h1 class="heading" style="font-size: 40px;">Дашборд</h1>
+                            <p class="caption text-muted mt-4">Обновлено: <span id="lastUpdated"></span> · <span class="mono text-violet" id="dashTime"></span></p>
                         </div>
                         <div class="text-right">
-                            <div class="mono text-violet" id="dashTime" style="font-size: var(--text-subheading);"></div>
-                            <p class="caption text-muted mt-4">Обновлено: <span id="lastUpdated"></span></p>
-                            <button class="btn btn-primary btn-sm mt-8" data-nav="add">+ Добавить операцию</button>
+                            <div class="month-switch">
+                                <button class="btn" type="button" data-action="month-prev" aria-label="Предыдущий месяц">‹</button>
+                                <select class="input select" id="monthSelect" aria-label="Месяц"></select>
+                                <button class="btn" type="button" data-action="month-next" id="monthNext" aria-label="Следующий месяц">›</button>
+                            </div>
+                            <div class="flex gap-8 mt-16" style="justify-content:flex-end; flex-wrap:wrap;">
+                                <button class="btn btn-sm" data-action="csv-open">⬆ Импорт выписки</button>
+                                <button class="btn btn-primary btn-sm" data-nav="add" data-magnetic>+ Добавить операцию</button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Base Currency Selector -->
                     <div class="card mb-24">
                         <div class="flex items-center gap-16 flex-wrap">
                             <span class="body-sm text-muted">Базовая валюта:</span>
-                            <select class="input select" id="baseCurrency" style="width: auto; min-width: 160px;">
+                            <select class="input select" id="baseCurrency" style="width: auto; min-width: 220px;" aria-label="Базовая валюта">
                                 <option value="USD">USD — Доллар США</option>
                                 <option value="EUR">EUR — Евро</option>
                                 <option value="GBP">GBP — Фунт стерлингов</option>
@@ -366,79 +387,64 @@
                         </div>
                     </div>
 
-                    <!-- Stats Cards -->
                     <div class="grid grid-4 gap-16 mb-24">
                         <div class="card stat-card">
-                            <div class="flex items-center gap-8">
-                                <span class="status-dot green"></span>
-                                <span class="stat-label">Доходы</span>
-                            </div>
+                            <div class="flex items-center gap-8"><span class="status-dot green"></span><span class="stat-label">Доходы</span></div>
                             <div class="stat-value text-green" id="statIncome">0 ₽</div>
-                            <div class="stat-change">За текущий месяц</div>
+                            <div class="stat-change stat-period">За текущий месяц</div>
+                            <span class="delta" id="deltaIncome"></span>
                         </div>
                         <div class="card stat-card">
-                            <div class="flex items-center gap-8">
-                                <span class="status-dot red"></span>
-                                <span class="stat-label">Расходы</span>
-                            </div>
+                            <div class="flex items-center gap-8"><span class="status-dot red"></span><span class="stat-label">Расходы</span></div>
                             <div class="stat-value text-red" id="statExpenses">0 ₽</div>
-                            <div class="stat-change">За текущий месяц</div>
+                            <div class="stat-change stat-period">За текущий месяц</div>
+                            <span class="delta" id="deltaExpenses"></span>
                         </div>
                         <div class="card stat-card">
-                            <div class="flex items-center gap-8">
-                                <span class="status-dot blue"></span>
-                                <span class="stat-label">Баланс</span>
-                            </div>
+                            <div class="flex items-center gap-8"><span class="status-dot blue"></span><span class="stat-label">Баланс</span></div>
                             <div class="stat-value text-blue" id="statBalance">0 ₽</div>
-                            <div class="stat-change">Текущий остаток</div>
+                            <div class="stat-change stat-period">Остаток за месяц</div>
+                            <span class="delta" id="deltaBalance"></span>
                         </div>
                         <div class="card stat-card">
-                            <div class="flex items-center gap-8">
-                                <span class="status-dot amber"></span>
-                                <span class="stat-label">Цель</span>
-                            </div>
+                            <div class="flex items-center gap-8"><span class="status-dot amber"></span><span class="stat-label">Цель</span></div>
                             <div class="flex items-center gap-8">
                                 <div class="stat-value text-amber" id="statGoal">5000 ₽</div>
-                                <button class="btn btn-sm btn-ghost" data-action="goal-open" title="Изменить цель">✎</button>
+                                <button class="btn btn-sm btn-ghost" data-action="goal-open" title="Изменить цель" aria-label="Изменить цель">✎</button>
                             </div>
-                            <div class="progress mt-8">
-                                <div class="progress-bar amber" id="goalProgressBar" style="width: 0%"></div>
-                            </div>
+                            <div class="progress mt-8"><div class="progress-bar grad" id="goalProgressBar" style="width: 0%"></div></div>
                             <div class="stat-change" id="goalProgressText">0% выполнено</div>
                         </div>
                     </div>
 
-                    <!-- AI Advice -->
                     <div class="card mb-24 hidden" id="aiAdviceCard">
                         <div class="flex items-center gap-8 mb-16">
                             <span class="status-dot violet"></span>
                             <h3 class="heading-sm">Финансовые советы</h3>
                         </div>
                         <div id="aiAdviceList"></div>
-                        <div class="mt-16">
-                            <button class="btn" data-nav="settings">
-                                Настроить параметры →
-                            </button>
-                        </div>
+                        <div class="mt-16"><button class="btn" data-nav="settings">Настроить параметры →</button></div>
                     </div>
 
-                    <!-- Main Grid -->
                     <div class="grid grid-2 gap-24" style="grid-template-columns: 2fr 1fr;">
-                        <!-- Left Column -->
                         <div>
-                            <!-- Expenses Chart -->
                             <div class="card mb-24">
                                 <div class="flex items-center gap-8 mb-16">
                                     <span class="status-dot violet"></span>
                                     <h3 class="heading-sm">Траты по категориям</h3>
                                 </div>
-                                <div class="chart-container">
-                                    <canvas id="expensesChart"></canvas>
-                                </div>
-                                <p class="caption text-muted mt-16">Диаграмма показывает процентное соотношение трат по категориям за текущий месяц.</p>
+                                <div class="chart-container"><canvas id="expensesChart"></canvas></div>
+                                <p class="caption text-muted mt-16" id="chartEmpty">Диаграмма показывает соотношение трат по категориям за выбранный месяц.</p>
                             </div>
 
-                            <!-- Category Details -->
+                            <div class="card mb-24">
+                                <div class="flex items-center gap-8 mb-16">
+                                    <span class="status-dot green"></span>
+                                    <h3 class="heading-sm">Доходы и расходы по месяцам</h3>
+                                </div>
+                                <div class="chart-wide"><canvas id="monthsChart"></canvas></div>
+                            </div>
+
                             <div class="card" id="categoryDetailsCard">
                                 <div class="flex items-center gap-8 mb-16">
                                     <span class="status-dot blue"></span>
@@ -446,35 +452,37 @@
                                 </div>
                                 <div class="table-wrap">
                                     <table class="table" id="categoryTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Категория</th>
-                                                <th class="text-right">Сумма</th>
-                                            </tr>
-                                        </thead>
+                                        <thead><tr><th>Категория</th><th class="text-right">Сумма</th></tr></thead>
                                         <tbody id="categoryTableBody"></tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right Column -->
                         <div>
-                            <!-- Currency Rates -->
-                            <div class="card mb-24">
-                                <div class="flex items-center gap-8 mb-16">
-                                    <span class="status-dot blue"></span>
-                                    <h3 class="heading-sm">Курсы валют</h3>
+                            <div class="card mb-24" id="budgetsCard">
+                                <div class="flex items-center justify-between gap-8 mb-8">
+                                    <div class="flex items-center gap-8"><span class="status-dot amber"></span><h3 class="heading-sm">Бюджеты</h3></div>
+                                    <button class="btn btn-sm" data-action="budget-open">Настроить</button>
                                 </div>
+                                <div id="budgetList"></div>
+                            </div>
+
+                            <div class="card mb-24">
+                                <div class="flex items-center justify-between gap-8 mb-8">
+                                    <div class="flex items-center gap-8"><span class="status-dot violet"></span><h3 class="heading-sm">Ближайшие платежи</h3></div>
+                                    <button class="btn btn-sm" data-nav="recurring">Все →</button>
+                                </div>
+                                <div id="upcomingList"></div>
+                            </div>
+
+                            <div class="card mb-24">
+                                <div class="flex items-center gap-8 mb-16"><span class="status-dot blue"></span><h3 class="heading-sm">Курсы валют</h3></div>
                                 <div id="currencyRatesList"></div>
                             </div>
 
-                            <!-- Crypto Rates -->
                             <div class="card">
-                                <div class="flex items-center gap-8 mb-16">
-                                    <span class="status-dot violet"></span>
-                                    <h3 class="heading-sm">Криптовалюты</h3>
-                                </div>
+                                <div class="flex items-center gap-8 mb-16"><span class="status-dot violet"></span><h3 class="heading-sm">Криптовалюты</h3></div>
                                 <div id="cryptoRatesList"></div>
                             </div>
                         </div>
@@ -485,17 +493,40 @@
             <!-- ==================== HISTORY PAGE ==================== -->
             <div class="page" id="page-history">
                 <div class="container">
-                    <div class="flex justify-between items-center mb-24">
+                    <div class="flex justify-between items-center mb-24 dash-head">
                         <div>
-                            <div class="badge mb-8">
-                                <span class="status-dot blue"></span>
-                                История
-                            </div>
+                            <div class="badge mb-8"><span class="status-dot blue"></span>История</div>
                             <h1 class="heading" style="font-size: 40px;">История операций</h1>
                         </div>
-                        <button class="btn" data-nav="dashboard">
-                            ← Назад
-                        </button>
+                        <div class="flex gap-8 flex-wrap">
+                            <button class="btn" data-action="csv-open">⬆ Импорт выписки</button>
+                            <button class="btn btn-primary" data-nav="add" data-magnetic>+ Добавить</button>
+                        </div>
+                    </div>
+
+                    <div class="card mb-16">
+                        <form class="filters" id="filtersForm" data-form="filters" role="search">
+                            <div class="filter-q">
+                                <label for="fQ">Поиск</label>
+                                <input class="input" type="search" id="fQ" name="q" maxlength="100" placeholder="Категория или комментарий" autocomplete="off">
+                            </div>
+                            <div>
+                                <label for="fType">Тип</label>
+                                <select class="input select" id="fType" name="type">
+                                    <option value="">Все</option>
+                                    <option value="income">Доходы</option>
+                                    <option value="expense">Расходы</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="fCategory">Категория</label>
+                                <select class="input select" id="fCategory" name="category"><option value="">Все категории</option></select>
+                            </div>
+                            <div><label for="fFrom">С даты</label><input class="input" type="date" id="fFrom" name="from"></div>
+                            <div><label for="fTo">По дату</label><input class="input" type="date" id="fTo" name="to"></div>
+                            <div><button type="button" class="btn" data-action="filters-reset">Сбросить</button></div>
+                        </form>
+                        <div class="filter-sum mt-16" id="filterSum" aria-live="polite"></div>
                     </div>
 
                     <div class="card" id="historyCard">
@@ -507,21 +538,23 @@
                                         <th>Тип</th>
                                         <th>Категория</th>
                                         <th class="text-right">Сумма</th>
-                                        <th class="text-right" style="width: 48px;"><span class="sr-only">Действия</span></th>
+                                        <th class="text-right" style="width: 84px;"><span class="sr-only">Действия</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="historyTableBody"></tbody>
                             </table>
                         </div>
                     </div>
+                    <div class="text-center mt-16"><button class="btn hidden" id="loadMore" data-action="history-more">Показать ещё</button></div>
 
                     <div class="empty-state hidden" id="historyEmpty">
                         <div class="empty-state-icon">📄</div>
-                        <h3 class="heading-sm mb-8">У вас ещё нет операций</h3>
-                        <p class="text-muted mb-24">Добавьте первую операцию, чтобы начать отслеживать финансы</p>
-                        <button class="btn btn-primary" data-nav="add">
-                            + Добавить первую операцию
-                        </button>
+                        <h3 class="heading-sm mb-8" id="historyEmptyTitle">У вас ещё нет операций</h3>
+                        <p class="text-muted mb-24" id="historyEmptyText">Добавьте первую операцию или загрузите выписку из банка.</p>
+                        <div class="flex gap-8 justify-center flex-wrap">
+                            <button class="btn btn-primary" data-nav="add">+ Добавить операцию</button>
+                            <button class="btn" data-action="csv-open">⬆ Импорт выписки</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -575,6 +608,11 @@
                                 <p class="caption text-iron mt-4">По умолчанию — сегодня. Можно указать прошедший день, если забыли записать трату.</p>
                             </div>
 
+                            <div class="mb-24">
+                                <label class="body-sm text-muted mb-8 block" for="txNote">Комментарий (необязательно)</label>
+                                <input type="text" class="input" name="note" id="txNote" maxlength="200" placeholder="Например: обед с коллегами" autocomplete="off">
+                            </div>
+
                             <button type="submit" class="btn btn-primary w-full btn-lg mb-16">
                                 ✓ Добавить операцию
                             </button>
@@ -585,6 +623,67 @@
                                 ← Назад к дашборду
                             </button>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== RECURRING PAGE ==================== -->
+            <div class="page" id="page-recurring">
+                <div class="container" style="max-width: 880px;">
+                    <div class="text-center mb-32">
+                        <div class="badge mb-8"><span class="status-dot violet"></span>Автоплатежи</div>
+                        <h1 class="heading" style="font-size: 40px;">Регулярные платежи</h1>
+                        <p class="text-muted mt-8" style="max-width: 560px; margin-left:auto; margin-right:auto;">Подписки, кредиты, коммуналка и зарплата. Akysaya сама добавит операцию в нужный день и покажет ближайшие платежи на дашборде.</p>
+                    </div>
+
+                    <div class="card mb-24" data-reveal>
+                        <h3 class="heading-sm mb-16" id="recFormTitle">Новый платёж</h3>
+                        <form id="recurringForm" data-form="recurring">
+                            <input type="hidden" name="id" id="recId">
+                            <div class="mb-16">
+                                <div class="radio-group">
+                                    <div class="radio-option">
+                                        <input type="radio" name="type" id="recTypeExpense" value="expense" checked>
+                                        <label for="recTypeExpense"><span class="text-red">↓</span> Расход</label>
+                                    </div>
+                                    <div class="radio-option">
+                                        <input type="radio" name="type" id="recTypeIncome" value="income">
+                                        <label for="recTypeIncome"><span class="text-green">↑</span> Доход</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-2 gap-16 mb-16">
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block" for="recTitle">Название</label>
+                                    <input class="input" id="recTitle" name="title" maxlength="60" required placeholder="Netflix, кредит, квартплата" autocomplete="off">
+                                </div>
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block" for="recAmount">Сумма (₽)</label>
+                                    <input class="input" id="recAmount" name="amount" type="number" step="0.01" min="0.01" required placeholder="0.00">
+                                </div>
+                            </div>
+                            <div class="grid grid-2 gap-16 mb-16">
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block" for="recCategory">Категория</label>
+                                    <select class="input select" id="recCategory" name="category" required></select>
+                                </div>
+                                <div>
+                                    <label class="body-sm text-muted mb-8 block" for="recDay">День месяца</label>
+                                    <input class="input" id="recDay" name="day" type="number" min="1" max="31" required placeholder="1–31">
+                                </div>
+                            </div>
+                            <p class="caption text-iron mb-16">Если в этом месяце день платежа уже прошёл, первая операция появится в следующем месяце. Для коротких месяцев 31-е число переносится на последний день.</p>
+                            <div class="flex gap-8 flex-wrap">
+                                <button type="submit" class="btn btn-primary" id="recSubmit">Сохранить платёж</button>
+                                <button type="button" class="btn hidden" id="recCancel" data-action="rec-cancel">Отменить изменение</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card" data-reveal>
+                        <h3 class="heading-sm mb-8">Ваши платежи</h3>
+                        <div id="recurringList"></div>
+                        <p class="body-sm text-muted hidden" id="recurringEmpty">Пока нет регулярных платежей. Добавьте подписку или кредит выше.</p>
                     </div>
                 </div>
             </div>
@@ -651,6 +750,33 @@
                         </div>
                     </div>
 
+                    <!-- Categories -->
+                    <div class="card mt-24" id="categoriesCard">
+                        <div class="flex items-center gap-8 mb-16">
+                            <span class="status-dot violet"></span>
+                            <h3 class="heading-sm">Категории</h3>
+                        </div>
+                        <p class="body-sm text-muted mb-16">Удалённая категория остаётся в старых операциях, а бюджет по ней убирается.</p>
+                        <h4 class="body-sm mb-8" style="color: var(--color-white);">Расходы</h4>
+                        <div class="cat-chips" id="catExpense"></div>
+                        <h4 class="body-sm mb-8" style="color: var(--color-white);">Доходы</h4>
+                        <div class="cat-chips" id="catIncome"></div>
+                        <form data-form="category-add" class="flex gap-8 flex-wrap" style="align-items: flex-end;">
+                            <div style="flex: 1; min-width: 180px;">
+                                <label class="body-sm text-muted mb-8 block" for="catName">Новая категория</label>
+                                <input class="input" id="catName" name="name" maxlength="32" required placeholder="Например: Спорт" autocomplete="off">
+                            </div>
+                            <div style="width: 170px;">
+                                <label class="body-sm text-muted mb-8 block" for="catType">Тип</label>
+                                <select class="input select" id="catType" name="type">
+                                    <option value="expense">Расход</option>
+                                    <option value="income">Доход</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" type="submit">Добавить</button>
+                        </form>
+                    </div>
+
                     <!-- Theme customization -->
                     <div class="card mt-24">
                         <div class="flex items-center gap-8 mb-16">
@@ -701,7 +827,7 @@
                             <span class="status-dot green"></span>
                             <h3 class="heading-sm">Резервная копия данных</h3>
                         </div>
-                        <p class="body-sm text-muted mb-16">Данные хранятся на сервере в вашем аккаунте. Файл-копия пригодится для переноса или архива. Восстановление добавляет операции из файла к текущим, дубликаты пропускаются. Подходят и копии из старой браузерной версии.</p>
+                        <p class="body-sm text-muted mb-16">Данные хранятся на сервере в вашем аккаунте. Копия включает операции с комментариями, категории, бюджеты и регулярные платежи. Восстановление добавляет данные из файла к текущим, дубликаты пропускаются. Подходят и копии из старой браузерной версии.</p>
                         <div class="flex gap-8 flex-wrap">
                             <button type="button" class="btn" data-action="backup-export">⬇ Скачать копию (.json)</button>
                             <label class="btn" style="cursor:pointer;">
@@ -743,17 +869,18 @@
                     <h2>2. Какие данные мы храним</h2>
                     <ul>
                         <li><b>Аккаунт:</b> имя пользователя и пароль. Пароль хранится только в виде необратимого хеша (scrypt), сам пароль мы не знаем.</li>
-                        <li><b>Финансовые записи, которые вы вводите:</b> операции (тип, сумма, категория, дата), зарплата и аренда с днями платежей, финансовая цель.</li>
+                        <li><b>Финансовые записи, которые вы вводите или импортируете:</b> операции (тип, сумма, категория, дата, комментарий), свои категории, бюджеты, регулярные платежи, зарплата и аренда с днями платежей, финансовая цель.</li>
                         <li><b>Email</b>, если вы сами его укажете. Он нужен только для напоминаний.</li>
                         <li><b>Оформление:</b> акцентный цвет, ссылка на фоновую картинку, затемнение фона.</li>
                         <li><b>Технические данные:</b> IP-адрес и время входов, неудачных попыток входа, удаления операций и других событий безопасности; дата и версия принятых условий.</li>
                     </ul>
                     <p>Мы не просим ФИО, телефон, паспортные данные, номера карт и банковские пароли. Аналитики, рекламы и сторонних трекеров на сайте нет.</p>
+                    <p><b>Банковская выписка (CSV):</b> файл передаётся на сервер только для разбора и не сохраняется. В аккаунт попадают дата, сумма, тип и описание операций, которые вы подтвердили к импорту. Если в описании есть имена получателей, они сохранятся в комментарии — при необходимости их можно изменить или удалить.</p>
 
                     <h2>3. Зачем</h2>
                     <ul>
                         <li>Чтобы сервис работал: считал баланс, строил графики, давал подсказки по бюджету.</li>
-                        <li>Чтобы отправлять email-напоминания об аренде и письмо о превышении расходов, если вы указали email.</li>
+                        <li>Чтобы автоматически добавлять регулярные платежи и отправлять email-напоминания о них и об аренде, а также письмо о превышении расходов, если вы указали email.</li>
                         <li>Чтобы защищать аккаунты от взлома и сервис от злоупотреблений.</li>
                         <li>Чтобы выполнять требования закона.</li>
                     </ul>
@@ -876,6 +1003,119 @@
                         <button type="button" class="btn" data-action="goal-close">Отмена</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+
+        <!-- ===== EDIT TRANSACTION MODAL ===== -->
+        <div class="modal-overlay" id="txModal">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="txModalTitle">
+                <div class="modal-header">
+                    <h3 class="heading-sm" id="txModalTitle">Изменить операцию</h3>
+                    <button class="modal-close" data-action="modal-close" data-arg="#txModal" aria-label="Закрыть">×</button>
+                </div>
+                <form data-form="tx-edit" id="txEditForm">
+                    <input type="hidden" name="id">
+                    <div class="mb-16">
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" name="type" id="editTypeIncome" value="income">
+                                <label for="editTypeIncome"><span class="text-green">↑</span> Доход</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" name="type" id="editTypeExpense" value="expense">
+                                <label for="editTypeExpense"><span class="text-red">↓</span> Расход</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-2 gap-16 mb-16">
+                        <div>
+                            <label class="body-sm text-muted mb-8 block" for="editAmount">Сумма (₽)</label>
+                            <input class="input" id="editAmount" name="amount" type="number" step="0.01" min="0.01" required>
+                        </div>
+                        <div>
+                            <label class="body-sm text-muted mb-8 block" for="editDate">Дата</label>
+                            <input class="input" id="editDate" name="date" type="date" required>
+                        </div>
+                    </div>
+                    <div class="mb-16">
+                        <label class="body-sm text-muted mb-8 block" for="editCategory">Категория</label>
+                        <select class="input select" id="editCategory" name="category" required></select>
+                    </div>
+                    <div class="mb-24">
+                        <label class="body-sm text-muted mb-8 block" for="editNote">Комментарий</label>
+                        <input class="input" id="editNote" name="note" maxlength="200" autocomplete="off">
+                    </div>
+                    <div class="flex gap-8">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn" data-action="modal-close" data-arg="#txModal">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== BUDGETS MODAL ===== -->
+        <div class="modal-overlay" id="budgetModal">
+            <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="budgetModalTitle">
+                <div class="modal-header">
+                    <h3 class="heading-sm" id="budgetModalTitle">Бюджеты на месяц</h3>
+                    <button class="modal-close" data-action="modal-close" data-arg="#budgetModal" aria-label="Закрыть">×</button>
+                </div>
+                <p class="body-sm text-muted mb-16">Сколько вы готовы тратить в месяц на каждую категорию. Оставьте поле пустым, чтобы не ограничивать категорию.</p>
+                <form data-form="budgets" id="budgetForm">
+                    <div id="budgetInputs" class="mb-24"></div>
+                    <div class="flex gap-8">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn" data-action="modal-close" data-arg="#budgetModal">Отмена</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== CSV IMPORT MODAL ===== -->
+        <div class="modal-overlay" id="csvModal">
+            <div class="modal-content modal-wide" role="dialog" aria-modal="true" aria-labelledby="csvModalTitle">
+                <div class="modal-header">
+                    <h3 class="heading-sm" id="csvModalTitle">Импорт банковской выписки</h3>
+                    <button class="modal-close" data-action="csv-close" aria-label="Закрыть">×</button>
+                </div>
+                <div id="csvStep1">
+                    <label class="dropzone" id="csvDrop">
+                        <span style="font-size: 30px;" aria-hidden="true">🏦</span>
+                        <span class="body-sm" style="color: var(--color-white);">Выберите CSV-файл выписки или перетащите его сюда</span>
+                        <span class="caption text-muted">Т-Банк, Сбер, Альфа и другие банки · до 5 МБ · UTF-8 или Windows-1251</span>
+                        <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" style="display:none;">
+                    </label>
+                    <p class="caption text-iron mt-16">Файл нужен только для импорта и на сервере не хранится, сохраняются лишь распознанные операции. Повторная загрузка той же выписки не создаёт дубликатов.</p>
+                </div>
+                <div id="csvStep2" class="hidden">
+                    <p class="body-sm text-muted mb-16" id="csvFileName"></p>
+                    <div class="map-grid mb-16">
+                        <div><label for="csvMapDate">Дата</label><select class="input select dd-sm" id="csvMapDate" data-map="date"></select></div>
+                        <div><label for="csvMapAmount">Сумма (±)</label><select class="input select dd-sm" id="csvMapAmount" data-map="amount"></select></div>
+                        <div><label for="csvMapDescription">Описание</label><select class="input select dd-sm" id="csvMapDescription" data-map="description"></select></div>
+                        <div><label for="csvMapDebit">Расход (отдельно)</label><select class="input select dd-sm" id="csvMapDebit" data-map="debit"></select></div>
+                        <div><label for="csvMapCredit">Приход (отдельно)</label><select class="input select dd-sm" id="csvMapCredit" data-map="credit"></select></div>
+                        <div><label for="csvMapCategory">Категория банка</label><select class="input select dd-sm" id="csvMapCategory" data-map="category"></select></div>
+                    </div>
+                    <label class="form-check mb-16">
+                        <input type="checkbox" id="csvInvert">
+                        <span class="body-sm">Расходы в файле записаны положительными числами</span>
+                    </label>
+                    <div class="csv-stats mb-16" id="csvStats"></div>
+                    <p class="body-sm text-red mb-16 hidden" id="csvProblem" role="alert"></p>
+                    <div class="table-wrap mb-16">
+                        <table class="table">
+                            <thead><tr><th>Дата</th><th>Тип</th><th>Категория</th><th>Описание</th><th class="text-right">Сумма</th></tr></thead>
+                            <tbody id="csvPreview"></tbody>
+                        </table>
+                    </div>
+                    <div class="flex gap-8 flex-wrap">
+                        <button type="button" class="btn btn-primary" data-action="csv-commit" id="csvCommit">Импортировать</button>
+                        <button type="button" class="btn" data-action="csv-reset">Другой файл</button>
+                        <button type="button" class="btn" data-action="csv-close">Отмена</button>
+                    </div>
+                </div>
             </div>
         </div>
 
